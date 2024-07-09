@@ -31,8 +31,6 @@ public:
 				unsigned int ig = (int)255.999 * g;
 				unsigned int ib = (int)255.999 * b;
 
-				unsigned int tem = 0xFF | 0xFF >> 8 | 0xFF >> 16 | 0x00 >> 24;
-				unsigned int temp = 0xFF | (unsigned int)ir | (unsigned int)ig | (unsigned int)ib;
 				xrgb[y * w + x] = RGBtoHEX(0xFF, ir, ig, ib);
 			}
 		}
