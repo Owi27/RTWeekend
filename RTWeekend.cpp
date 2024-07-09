@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "Renderer.h"
 
 // open some namespaces to compact the code a bit
 using namespace GW;
