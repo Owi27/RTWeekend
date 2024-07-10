@@ -92,28 +92,37 @@ public:
 	}
 
 private:
+	//TODO: create a ve3 math buffer;
 
-	bool HitSphere(vec3& center, float radius, Ray& r)
+	float HitSphere(vec3& center, float radius, Ray& r)
 	{
 		vec3 oc;
-		float a, b, c;
+		float a, h, c;
 		pVec2D::Subtract3F(center, r.Origin(), oc);
-		pVec2D::Dot3F(r.Direction(), r.Direction(), a);
-		pVec2D::Dot3F(r.Direction(), oc, b);
-		b *= -2.f;
-		pVec2D::Dot3F(oc, oc, c);
+		pVec2D::Magnitude3F(r.Direction(), a);
+		pVec2D::Dot3F(r.Direction(), oc, h);
+		pVec2D::Magnitude3F(oc, c);
 		c -= radius * radius;
 
-		float discriminant = b * b - 4 * a * c;
-		return (discriminant >= 0);
+		float discriminant = h * h - a * c;
+		
+		return (discriminant < 0) ? -1 : (h - sqrt(discriminant)) / a;
 	}
 
 	vec3 RayColor(Ray& r)
 	{
 		vec3 center = { 0.f,0.f,-1.f };
-		if (HitSphere(center, 0.5, r))
+		auto t = HitSphere(center, .5f, r);
+
+		if (t > 0.f)
 		{
-			return { 1, 0, 0 };
+			vec3 out;
+			vec3 n, v;
+			pVec2D::Subtract3F(r.At(t), vec3{ 0, 0, -1 }, v);
+			pVec2D::Normalize3F(v, n);
+			pVec2D::Scale3F(vec3{ n.x + 1.f, n.y + 1.f, n.z + 1.f }, .5f, out);
+
+			return out;
 		}
 
 		vec3 unitDirection;
