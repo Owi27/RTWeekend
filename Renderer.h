@@ -2,16 +2,6 @@
 
 class Renderer
 {
-	// proxy handles
-	GW::SYSTEM::GWindow _win;
-	GW::GRAPHICS::GRasterSurface _ras;
-	// what we need at a minimum to draw a triangle
-	float verts[6] =
-	{
-		   0,   0.5f,
-		 0.5f, -0.5f,
-		-0.5f, -0.5f
-	};
 public:
 	Renderer(GW::SYSTEM::GWindow win, GW::GRAPHICS::GRasterSurface ras)
 	{
@@ -22,65 +12,65 @@ public:
 	void Render(unsigned int* xrgb, unsigned int w, unsigned int h)
 	{
 		auto aspectRatio = 16.f / 9.f;
+		int samplesPerPixel = 100;
+
+		//world
+		HittableList world;
+		world.Add(make_shared<Sphere>(vec3{ 0, 0, -1 }, .5f));
+		world.Add(make_shared<Sphere>(vec3{ 0, -100.5, -1 }, 1));
 
 		//cam
 		float focalLength = 1.f;
 		float viewportHeight = 2.f;
 		float viewportWidth = viewportHeight * (double(w) / h);
-		vec3 camCenter = { 0, 0, 0 };
+
+		_pixelSamplesScale = 1.f / samplesPerPixel;
+
+		_camCenter = { 0, 0, 0 };
 
 		//Calculate the vectors across the horizontal and down the vertical viewport edges.
 		vec3 viewportU = { viewportWidth, 0 ,0 };
 		vec3 viewportV = { 0, -viewportHeight, 0 };
 
 		//Calculate the horizontal and vertical delta vectors from pixel to pixel.
-		vec3 pixelDeltaU;
-		vec3 pixelDeltaV;
+		_pixelDeltaU;
+		_pixelDeltaV;
 		{
-			pVec2D::Scale3F(viewportU, (1.f / w), pixelDeltaU);
-			pVec2D::Scale3F(viewportV, (1.f / h), pixelDeltaV);
+			pVec2D::Scale3F(viewportU, (1.f / w), _pixelDeltaU);
+			pVec2D::Scale3F(viewportV, (1.f / h), _pixelDeltaV);
 		}
 
 		// Calculate the location of the upper left pixel.
 		vec3 viewportUpperLeft;
 		{
 			vec3 v1, v2;
-			pVec2D::Subtract3F(camCenter, vec3{ 0, 0, focalLength }, viewportUpperLeft);
+			pVec2D::Subtract3F(_camCenter, vec3{ 0, 0, focalLength }, viewportUpperLeft);
 			pVec2D::Scale3F(viewportU, .5f, v1);
 			pVec2D::Subtract3F(viewportUpperLeft, v1, viewportUpperLeft);
 			pVec2D::Scale3F(viewportV, .5f, v2);
 			pVec2D::Subtract3F(viewportUpperLeft, v2, viewportUpperLeft);
 		}
 
-		vec3 pixel00Loc;
+		_pixel00Loc;
 		{
 			vec3 v;
-			pVec2D::Add3F(pixelDeltaU, pixelDeltaV, v);
+			pVec2D::Add3F(_pixelDeltaU, _pixelDeltaV, v);
 			pVec2D::Scale3F(v, .5f, v);
-			pVec2D::Add3F(viewportUpperLeft, v, pixel00Loc);
+			pVec2D::Add3F(viewportUpperLeft, v, _pixel00Loc);
 		}
 
-		for (size_t y = 0; y < h; y++)
+		for (int y = 0; y < h; y++)
 		{
-			for (size_t x = 0; x < w; x++)
+			for (int x = 0; x < w; x++)
 			{
-				vec3 pixelCenter;
+				vec3 pixColor = { 0, 0, 0 };
+				for (size_t sample = 0; sample < samplesPerPixel; sample++)
 				{
-					vec3 v1;
-					pVec2D::Scale3F(pixelDeltaU, x, v1);
-					pVec2D::Add3F(pixel00Loc, v1, pixelCenter);
-					pVec2D::Scale3F(pixelDeltaV, y, v1);
-					pVec2D::Add3F(pixelCenter, v1, pixelCenter);
+					Ray r = GetRay(x, y);
+					pVec2D::Add3F(pixColor, RayColor(r, world), pixColor);
 				}
 
-				vec3 rayDirection;
-				{
-					pVec2D::Subtract3F(pixelCenter, camCenter, rayDirection);
-				}
-
-				Ray r(camCenter, rayDirection);
-
-				vec3 pixColor = RayColor(r);
+				pVec2D::Scale3F(pixColor, _pixelSamplesScale, pixColor);
 				xrgb[y * w + x] = RGBtoHEX(0xFF, pixColor);
 			}
 		}
@@ -92,37 +82,48 @@ public:
 	}
 
 private:
-	//TODO: create a ve3 math buffer;
+	// proxy handles
+	GW::SYSTEM::GWindow _win;
+	GW::GRAPHICS::GRasterSurface _ras;
+	vec3 _camCenter;
+	vec3 _pixel00Loc;
+	vec3 _pixelDeltaU;
+	vec3 _pixelDeltaV;
+	float _pixelSamplesScale;
 
-	float HitSphere(vec3& center, float radius, Ray& r)
+	Ray GetRay(int x, int y) const
 	{
-		vec3 oc;
-		float a, h, c;
-		pVec2D::Subtract3F(center, r.Origin(), oc);
-		pVec2D::Magnitude3F(r.Direction(), a);
-		pVec2D::Dot3F(r.Direction(), oc, h);
-		pVec2D::Magnitude3F(oc, c);
-		c -= radius * radius;
+		vec3 offset = SampleSquare();
 
-		float discriminant = h * h - a * c;
-		
-		return (discriminant < 0) ? -1 : (h - sqrt(discriminant)) / a;
+		vec3 v[2], pixelSample;
+		pVec2D::Scale3F(_pixelDeltaU, x + offset.x, v[0]);
+		pVec2D::Scale3F(_pixelDeltaV, y + offset.y, v[1]);
+		pVec2D::Add3F(_pixel00Loc, v[0], v[0]);
+		pVec2D::Add3F(v[0], v[1], pixelSample);
+
+		vec3 rayOrigin = _camCenter;
+		vec3 rayDirection;
+		pVec2D::Subtract3F(pixelSample, rayOrigin, rayDirection);
+
+		return Ray(rayOrigin, rayDirection);
 	}
 
-	vec3 RayColor(Ray& r)
+	vec3 SampleSquare() const
 	{
-		vec3 center = { 0.f,0.f,-1.f };
-		auto t = HitSphere(center, .5f, r);
+		return { RandomFloat() - .5f, RandomFloat() - .5f, 0 };
+	}
 
-		if (t > 0.f)
+	vec3 RayColor(Ray& r, const Hittable& world)
+	{
+		HitRecord rec;
+
+		if (world.Hit(r, Interval(0, INFINITY), rec))
 		{
-			vec3 out;
-			vec3 n, v;
-			pVec2D::Subtract3F(r.At(t), vec3{ 0, 0, -1 }, v);
-			pVec2D::Normalize3F(v, n);
-			pVec2D::Scale3F(vec3{ n.x + 1.f, n.y + 1.f, n.z + 1.f }, .5f, out);
+			vec3 v;
+			pVec2D::Add3F(rec.normal, vec3{ 1,1,1 }, v);
+			pVec2D::Scale3F(v, .5f, v);
 
-			return out;
+			return v;
 		}
 
 		vec3 unitDirection;
@@ -139,10 +140,21 @@ private:
 
 	unsigned int RGBtoHEX(unsigned int x, vec3 color)
 	{
-		unsigned int r = (int)255.999 * color.x;
-		unsigned int g = (int)255.999 * color.y;
-		unsigned int b = (int)255.999 * color.z;
+		static const Interval intensity(0.000, 0.999);
+		unsigned int r = (int)256 * intensity.Clamp(color.x);
+		unsigned int g = (int)256 * intensity.Clamp(color.y);
+		unsigned int b = (int)256 * intensity.Clamp(color.z);
 
 		return ((x & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+	}
+
+	float RandomFloat() const //Returns a random real in [0,1).
+	{
+		return rand() / (RAND_MAX + 1.0);
+	}
+
+	float RandomFloat(float min, float max) const // Returns a random real in [min,max).
+	{
+		return min + (max - min) * RandomFloat();
 	}
 };

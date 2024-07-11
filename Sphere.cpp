@@ -7,7 +7,7 @@ Sphere::Sphere(const vec3& center, float radius)
 	_radius = radius;
 }
 
-bool Sphere::Hit(Ray& r, float rayMin, float rayMax, HitRecord& rec) const
+bool Sphere::Hit(Ray& r, Interval interval, HitRecord& rec) const
 {
 	vec3 oc;
 	float a, h, c;
@@ -26,11 +26,11 @@ bool Sphere::Hit(Ray& r, float rayMin, float rayMax, HitRecord& rec) const
 	//find nearest root that lies in acceptable range
 	float root = (h - sqrtD) / a;
 
-	if (root <= rayMin || rayMax <= root)
+	if (!interval.Surrounds(root))
 	{
 		root = (h + sqrtD) / a;
-		
-		if (root <= rayMin || rayMax <= root)
+
+		if (!interval.Surrounds(root))
 		{
 			return false;
 		}
@@ -42,9 +42,10 @@ bool Sphere::Hit(Ray& r, float rayMin, float rayMax, HitRecord& rec) const
 	{
 		vec3 v;
 		pVec2D::Subtract3F(rec.point, _center, v);
-		pVec2D::Scale3F(v, 1 / _radius, outNormal);
+		pVec2D::Normalize3F(v, v);
+		pVec2D::Scale3F(v, (1.f / _radius), rec.normal);
 	}
-	rec.SetFaceNormal(r, outNormal);
+	//rec.SetFaceNormal(r, outNormal);
 
 	return true;
 }
