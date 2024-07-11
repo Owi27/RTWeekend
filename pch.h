@@ -36,6 +36,16 @@ using std::sqrt;
 //constants
 //TODO: create a ve3 math buffer;
 
+//static vec3 RandomVec3() 
+//{
+//	return vec3{ RandomFloat(), RandomFloat(), RandomFloat() };
+//}
+//
+//static vec3 RandomVec3(float min, float max) 
+//{
+//	return vec3{ RandomFloat(min, max), RandomFloat(min, max), RandomFloat(min, max) };
+//}
+
 using vec2 = GW::MATH2D::GVECTOR2F;
 using vec3 = GW::MATH2D::GVECTOR3F;
 using vec4 = GW::MATH::GVECTORF;

@@ -148,12 +148,12 @@ private:
 		return ((x & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 	}
 
-	float RandomFloat() const //Returns a random real in [0,1).
+	static float RandomFloat() //Returns a random real in [0,1).
 	{
 		return rand() / (RAND_MAX + 1.0);
 	}
 
-	float RandomFloat(float min, float max) const // Returns a random real in [min,max).
+	static float RandomFloat(float min, float max) // Returns a random real in [min,max).
 	{
 		return min + (max - min) * RandomFloat();
 	}
