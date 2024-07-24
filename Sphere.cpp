@@ -29,7 +29,7 @@ bool Sphere::Hit(Ray& r, Interval interval, HitRecord& rec) const
 	if (!interval.Surrounds(root))
 	{
 		root = (h + sqrtD) / a;
-
+		
 		if (!interval.Surrounds(root))
 		{
 			return false;
@@ -38,14 +38,14 @@ bool Sphere::Hit(Ray& r, Interval interval, HitRecord& rec) const
 
 	rec.t = root;
 	rec.point = r.At(rec.t);
+
 	vec3 outNormal;
 	{
 		vec3 v;
 		pVec2D::Subtract3F(rec.point, _center, v);
-		pVec2D::Normalize3F(v, v);
-		pVec2D::Scale3F(v, (1.f / _radius), rec.normal);
+		pVec2D::Scale3F(v, 1.f / _radius, outNormal);
 	}
-	//rec.SetFaceNormal(r, outNormal);
+	rec.SetFaceNormal(r, outNormal);
 
 	return true;
 }

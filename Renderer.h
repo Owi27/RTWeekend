@@ -17,7 +17,7 @@ public:
 		//world
 		HittableList world;
 		world.Add(make_shared<Sphere>(vec3{ 0, 0, -1 }, .5f));
-		world.Add(make_shared<Sphere>(vec3{ 0, -100.5, -1 }, 1));
+		//world.Add(make_shared<Sphere>(vec3{ 0, -100.5, -1 }, 100));
 
 		//cam
 		float focalLength = 1.f;
@@ -63,6 +63,7 @@ public:
 		{
 			for (int x = 0; x < w; x++)
 			{
+				//std::cout << x << ' ' << y << '\n';
 				vec3 pixColor = { 0, 0, 0 };
 				for (size_t sample = 0; sample < samplesPerPixel; sample++)
 				{
@@ -72,6 +73,7 @@ public:
 
 				pVec2D::Scale3F(pixColor, _pixelSamplesScale, pixColor);
 				xrgb[y * w + x] = RGBtoHEX(0xFF, pixColor);
+
 			}
 		}
 	}
@@ -113,17 +115,18 @@ private:
 		return { RandomFloat() - .5f, RandomFloat() - .5f, 0 };
 	}
 
-	vec3 RayColor(Ray& r, const Hittable& world)
+	vec3 RayColor(Ray& r, const Hittable& world) const
 	{
 		HitRecord rec;
 
 		if (world.Hit(r, Interval(0, INFINITY), rec))
 		{
-			vec3 v;
-			pVec2D::Add3F(rec.normal, vec3{ 1,1,1 }, v);
-			pVec2D::Scale3F(v, .5f, v);
+			vec3 out;
+			//vec3 direction = RandomOnHemisphere(rec.normal);
+			//Ray ray(rec.point, direction);
+			pVec2D::Scale3F(vec3{ rec.normal.x + 1, rec.normal.y + 1, rec.normal.z + 1 }, .5f, out);
 
-			return v;
+			return out;
 		}
 
 		vec3 unitDirection;
@@ -146,15 +149,5 @@ private:
 		unsigned int b = (int)256 * intensity.Clamp(color.z);
 
 		return ((x & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
-	}
-
-	static float RandomFloat() //Returns a random real in [0,1).
-	{
-		return rand() / (RAND_MAX + 1.0);
-	}
-
-	static float RandomFloat(float min, float max) // Returns a random real in [min,max).
-	{
-		return min + (max - min) * RandomFloat();
 	}
 };

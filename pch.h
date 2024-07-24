@@ -22,29 +22,9 @@ using std::make_shared;
 using std::shared_ptr;
 using std::sqrt;
 
-////utility funcs
-//inline float RandomFloat() //Returns a random real in [0,1).
-//{
-//    return rand() / (RAND_MAX + 1.0);
-//}
-//
-//inline float RandomFloat(float min, float max) // Returns a random real in [min,max).
-//{
-//    return min + (max - min) * RandomFloat();
-//}
-
 //constants
 //TODO: create a ve3 math buffer;
 
-//static vec3 RandomVec3() 
-//{
-//	return vec3{ RandomFloat(), RandomFloat(), RandomFloat() };
-//}
-//
-//static vec3 RandomVec3(float min, float max) 
-//{
-//	return vec3{ RandomFloat(min, max), RandomFloat(min, max), RandomFloat(min, max) };
-//}
 
 using vec2 = GW::MATH2D::GVECTOR2F;
 using vec3 = GW::MATH2D::GVECTOR3F;
@@ -52,6 +32,9 @@ using vec4 = GW::MATH::GVECTORF;
 
 //proxies
 using pVec2D = GW::MATH2D::GVector2D;
+
+#include "Utility.h"
+
 #include "Ray.h"
 
 #include "Interval.h"
