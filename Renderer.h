@@ -72,7 +72,6 @@ public:
 				}
 
 				pVec2D::Scale3F(pixColor, _pixelSamplesScale, pixColor);
-				pixColor = { fabs(pixColor.x), fabs(pixColor.y), fabs(pixColor.z) };
 				xrgb[y * w + x] = RGBtoHEX(0xFF, pixColor);
 
 			}
