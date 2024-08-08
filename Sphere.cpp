@@ -43,9 +43,9 @@ bool Sphere::Hit(Ray& r, Interval interval, HitRecord& rec) const
 	{
 		vec3 v;
 		pVec2D::Subtract3F(rec.point, _center, v);
-		pVec2D::Scale3F(v, 1.f / _radius, outNormal);
+		pVec2D::Scale3F(v, 1.f / _radius, rec.normal);
 	}
-	rec.SetFaceNormal(r, outNormal);
+	//rec.SetFaceNormal(r, outNormal);
 
 	return true;
 }

@@ -8,13 +8,14 @@ using namespace GRAPHICS;
 // allocate an 800x600 pixel buffer for display (keep centered on Resize)
 unsigned int XRGB[800 * 600] = { 0, };
 // lets pop a window and use GRasterSurface to upload an image with a triangle
-int main()
-{
+int main(){
 	GWindow win;
 	GEventResponder msgs;
 	GRasterSurface raster;
 	if (+win.Create(0, 0, 800, 600, GWindowStyle::WINDOWEDBORDERED))
 	{
+		win.SetWindowName("Raytracing in One Weekend : Owi | Gateware");
+
 		unsigned int color = 0xFFFFFF00;
 		msgs.Create([&](const GW::GEvent& e) {
 			GW::SYSTEM::GWindow::Events q;
